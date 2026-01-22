@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Deep Trace - Testing Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            padding: 30px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .info-value {
+            color: #212529;
+            text-align: right;
+        }
+
+        .risk-score {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .risk-minimal { background: #d4edda; color: #155724; }
+        .risk-low { background: #d1ecf1; color: #0c5460; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+
+        .hop-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .hop-header {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .hop-details {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .factors-list {
+            list-style: none;
+        }
+
+        .factors-list li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .factors-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 URL Deep Trace</h1>
+            <p>Advanced URL Security Analysis & Threat Detection</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="Enter URL to analyze (e.g., https://example.com)" value="https://example.com">
+                <button id="analyzeBtn" onclick="analyzeURL()">Analyze URL</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL... Please wait</p>
+            <p style="color: #6c757d; margin-top: 10px;">This may take 5-10 seconds</p>
+        </div>
+
+        <div class="results" id="results">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        async function analyzeURL() {
+            const url = document.getElementById('urlInput').value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('URL must start with http:// or https://');
+                return;
+            }
+
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/v1/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayResults(result.data);
+                } else {
+                    displayError(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                displayError('Failed to connect to API server. Make sure the server is running on http://localhost:3000');
+            } finally {
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            const riskClass = `risk-${data.security.risk.level}`;
+            const statusClass = data.success ? 'status-success' : 'status-error';
+
+            let html = `
+                <span class="status-badge ${statusClass}">
+                    ${data.success ? '✅ Analysis Complete' : '❌ Analysis Failed'}
+                </span>
+
+                <div class="section">
+                    <div class="section-title">📊 Overview</div>
+                    <div class="info-row">
+                        <span class="info-label">URL</span>
+                        <span class="info-value">${data.url}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Final Destination</span>
+                        <span class="info-value">${data.finalDestination || 'N/A'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Hops</span>
+                        <span class="info-value">${data.trace.totalHops || 0}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Execution Time</span>
+                        <span class="info-value">${data.metadata.executionTime}ms</span>
+                    </div>
+                </div>
+
+                <div class="risk-score ${riskClass}">
+                    Risk Score: ${data.security.risk.score}/100
+                    <div style="font-size: 0.5em; margin-top: 10px;">Level: ${data.security.risk.level.toUpperCase()}</div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">⚠️ Risk Factors</div>
+                    <ul class="factors-list">
+                        ${data.security.risk.factors.map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            if (data.mlClassification) {
+                html += `
+                    <div class="section">
+                        <div class="section-title">🤖 ML Classification</div>
+                        <div class="info-row">
+                            <span class="info-label">Classification</span>
+                            <span class="info-value"><strong>${data.mlClassification.classification.toUpperCase()}</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Confidence</span>
+                            <span class="info-value">${data.mlClassification.confidence}%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Explanation</span>
+                            <span class="info-value">${data.mlClassification.explanation.reasoning}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.threat && !data.threat.error) {
+                html += `
+                    <div class="section">
+                        <div class="section-title">🛡️ Threat Intelligence</div>
+                        <div class="grid-2">
+                            <div>
+                                <div class="info-row">
+                                    <span class="info-label">Threat Level</span>
+                                    <span class="info-value">${data.threat.threatLevel?.level?.toUpperCase() || 'LOW'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Threat Score</span>
+                                    <span class="info-value">${data.threat.threatLevel?.score || 0}/100</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="info-row">
+                                    <span class="info-label">Phishing Detected</span>
+                                    <span class="info-value">${data.threat.phishingIndicators?.detected ? '⚠️ YES' : '✅ NO'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Malware Risk</span>
+                                    <span class="info-value">${data.threat.malwareRisk?.level?.toUpperCase() || 'LOW'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.trace.chain && data.trace.chain.length > 0) {
+                html += `
+                    <div class="section">
+                        <div class="section-title">🔗 Redirect Chain (${data.trace.chain.length} hops)</div>
+                `;
+                
+                data.trace.chain.forEach((hop, index) => {
+                    html += `
+                        <div class="hop-item">
+                            <div class="hop-header">Hop ${index + 1}: ${hop.type.toUpperCase()}</div>
+                            <div class="hop-details">
+                                <div><strong>URL:</strong> ${hop.url}</div>
+                                <div><strong>Status:</strong> ${hop.statusCode || (hop.error ? 'ERROR' : 'N/A')}</div>
+                                <div><strong>Protocol:</strong> ${hop.protocol || 'N/A'}</div>
+                                ${hop.redirectType ? `<div><strong>Redirect Type:</strong> ${hop.redirectType}</div>` : ''}
+                                ${hop.error ? `<div style="color: red;"><strong>Error:</strong> ${hop.error}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+
+                const firstHop = data.trace.chain[0];
+
+                if (firstHop.tlsInfo && firstHop.tlsInfo.valid) {
+                    html += `
+                        <div class="section">
+                            <div class="section-title">🔒 TLS Certificate</div>
+                            <div class="info-row">
+                                <span class="info-label">Valid</span>
+                                <span class="info-value">${firstHop.tlsInfo.valid ? '✅ Yes' : '❌ No'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Issuer</span>
+                                <span class="info-value">${firstHop.tlsInfo.issuer || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Days Remaining</span>
+                                <span class="info-value">${firstHop.tlsInfo.daysRemaining} days</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Expired</span>
+                                <span class="info-value">${firstHop.tlsInfo.isExpired ? '⚠️ Yes' : '✅ No'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (firstHop.lexical) {
+                    html += `
+                        <div class="section">
+                            <div class="section-title">📝 Lexical Analysis</div>
+                            <div class="grid-2">
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">URL Length</span>
+                                        <span class="info-value">${firstHop.lexical.length || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Entropy</span>
+                                        <span class="info-value">${firstHop.lexical.entropy || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Risk Score</span>
+                                        <span class="info-value">${firstHop.lexical.riskScore || 0}/100</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">TLD</span>
+                                        <span class="info-value">${firstHop.lexical.hostname?.tld || 'N/A'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Subdomains</span>
+                                        <span class="info-value">${firstHop.lexical.hostname?.subdomainCount || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Has Homoglyphs</span>
+                                        <span class="info-value">${firstHop.lexical.homoglyphDetection?.hasHomoglyphs ? '⚠️ Yes' : '✅ No'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (firstHop.domainInfo) {
+                    html += `
+                        <div class="section">
+                            <div class="section-title">🌐 Domain Intelligence</div>
+                            <div class="grid-2">
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">Hostname</span>
+                                        <span class="info-value">${firstHop.domainInfo.hostname}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">DNS Success</span>
+                                        <span class="info-value">${firstHop.domainInfo.dnsRecords?.querySuccess ? '✅ Yes' : '❌ No'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Has MX</span>
+                                        <span class="info-value">${firstHop.domainInfo.dnsRecords?.hasMX ? '✅ Yes' : '❌ No'}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">Has SPF</span>
+                                        <span class="info-value">${firstHop.domainInfo.dnsRecords?.hasSPF ? '✅ Yes' : '❌ No'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Has DMARC</span>
+                                        <span class="info-value">${firstHop.domainInfo.dnsRecords?.hasDMARC ? '✅ Yes' : '❌ No'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Domain Risk</span>
+                                        <span class="info-value">${firstHop.domainInfo.riskScore}/100</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (firstHop.headerFingerprint) {
+                    html += `
+                        <div class="section">
+                            <div class="section-title">🔐 Security Headers</div>
+                            <div class="info-row">
+                                <span class="info-label">Security Score</span>
+                                <span class="info-value">${firstHop.headerFingerprint.security?.score || 0}/100</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Server</span>
+                                <span class="info-value">${firstHop.headerFingerprint.server?.identified || firstHop.headerFingerprint.server?.raw || 'Not Disclosed'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">HSTS Enabled</span>
+                                <span class="info-value">${firstHop.headerFingerprint.security?.hsts?.enabled ? '✅ Yes' : '❌ No'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">CSP Enabled</span>
+                                <span class="info-value">${firstHop.headerFingerprint.security?.csp?.enabled ? '✅ Yes' : '❌ No'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (firstHop.htmlAnalysis) {
+                    html += `
+                        <div class="section">
+                            <div class="section-title">📄 HTML Analysis</div>
+                            <div class="grid-2">
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">Total Elements</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.structure?.totalElements || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Forms</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.forms?.count || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Scripts</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.scripts?.total || 0}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="info-row">
+                                        <span class="info-label">External Links</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.links?.external || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Obfuscated Scripts</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.scripts?.obfuscated || 0}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Iframes</span>
+                                        <span class="info-value">${firstHop.htmlAnalysis.iframes?.count || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('active');
+        }
+
+        function displayError(errorMsg) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <span class="status-badge status-error">❌ Error</span>
+                <div class="section">
+                    <div class="section-title">Error Details</div>
+                    <p style="color: #721c24; padding: 20px; background: #f8d7da; border-radius: 8px;">
+                        ${errorMsg}
+                    </p>
+                    <p style="margin-top: 20px; color: #6c757d;">
+                        💡 <strong>Troubleshooting:</strong><br>
+                        1. Make sure API server is running: <code>npm run server</code><br>
+                        2. Check if URL is valid and accessible<br>
+                        3. Verify your internet connection
+                    </p>
+                </div>
+            `;
+            resultsDiv.classList.add('active');
+        }
+
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeURL();
+            }
+        });
+    </script>
+</body>
+</html>
