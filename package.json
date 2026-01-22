@@ -1,6 +1,6 @@
 {
   "name": "url-deep-trace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Advanced URL tracing engine with SSL forensics and security analysis",
   "main": "src/index.js",
   "type": "module",
