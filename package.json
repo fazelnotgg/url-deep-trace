@@ -1,13 +1,14 @@
 {
   "name": "url-deep-trace",
-  "version": "1.0.1",
-  "description": "Advanced URL tracing engine with SSL forensics and security analysis",
+  "version": "1.0.2",
+  "description": "Advanced URL tracing engine with SSL forensics and security analysis - Optimized for performance",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "test": "node test/basic-test.js",
     "test:security": "node test/security-test.js",
     "test:all": "node test/run-all-tests.js",
+    "test:optimization": "node test/optimization-test.js",
     "example": "node examples/basic-usage.js",
     "example:advanced": "node examples/advanced-usage.js",
     "server": "node examples/api-server.js",

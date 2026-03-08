@@ -3,43 +3,81 @@ export class PerformanceManager {
     this.maxConcurrent = options.maxConcurrent || 5;
     this.retryAttempts = options.retryAttempts || 2;
     this.retryDelay = options.retryDelay || 1000;
+    this.progressCallback = options.onProgress || null;
   }
 
   async analyzeBatch(urls, analyzer) {
+    const results = new Array(urls.length);
+    const semaphore = { count: 0, queue: [] };
+    
+    const processUrl = async (url, index) => {
+      while (semaphore.count >= this.maxConcurrent) {
+        await new Promise(resolve => semaphore.queue.push(resolve));
+      }
+      
+      semaphore.count++;
+      
+      try {
+        const result = await this._analyzeWithRetry(url, analyzer);
+        results[index] = result;
+        return result;
+      } finally {
+        semaphore.count--;
+        if (semaphore.queue.length > 0) {
+          const next = semaphore.queue.shift();
+          next();
+        }
+        
+        if (this.progressCallback) {
+          this.progressCallback({ completed: index + 1, total: urls.length });
+        }
+      }
+    };
+
+    const promises = urls.map((url, index) => processUrl(url, index));
+    await Promise.allSettled(promises);
+
+    return results.filter(r => r !== undefined);
+  }
+
+  async analyzeBatchParallel(urls, analyzer, options = {}) {
+    const batchSize = options.batchSize || this.maxConcurrent;
     const results = [];
-    const queue = [...urls];
-    const inProgress = new Map();
-
-    while (queue.length > 0 || inProgress.size > 0) {
-      while (inProgress.size < this.maxConcurrent && queue.length > 0) {
-        const url = queue.shift();
-        const promise = this._analyzeWithRetry(url, analyzer);
-        inProgress.set(url, promise);
-
-        promise
-          .then(result => {
-            results.push(result);
-            inProgress.delete(url);
-          })
-          .catch(error => {
-            results.push({
+    const useRetry = options.retry !== false;
+    
+    for (let i = 0; i < urls.length; i += batchSize) {
+      const batch = urls.slice(i, i + batchSize);
+      
+      const batchPromises = batch.map((url, index) => 
+        (async () => {
+          try {
+            return useRetry 
+              ? await this._analyzeWithRetry(url, analyzer)
+              : await analyzer.analyze(url);
+          } catch (error) {
+            return {
               success: false,
               url: url,
               error: error.message,
               metadata: {
                 analyzedAt: new Date().toISOString()
               }
-            });
-            inProgress.delete(url);
-          });
-      }
-
-      if (inProgress.size > 0) {
-        await Promise.race(inProgress.values());
+            };
+          }
+        })()
+      );
+      
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+      
+      if (this.progressCallback) {
+        this.progressCallback({ 
+          completed: Math.min(i + batchSize, urls.length), 
+          total: urls.length,
+          batch: Math.ceil((i + batchSize) / batchSize)
+        });
       }
     }
-
-    await Promise.allSettled(inProgress.values());
 
     return results;
   }

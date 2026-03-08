@@ -14,7 +14,8 @@ export class URLDeepTrace {
       maxHops: options.maxHops || 20,
       timeout: options.timeout || 15000,
       userAgent: options.userAgent,
-      enableDeepAnalysis: options.enableDeepAnalysis !== false
+      enableDeepAnalysis: options.enableDeepAnalysis !== false,
+      analysisDepth: options.analysisDepth || 'full'
     });
     
     this.riskEngine = new RiskEngine();

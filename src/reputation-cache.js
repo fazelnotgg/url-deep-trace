@@ -5,8 +5,8 @@ export class ReputationCache {
     this.maxAge = options.maxAge || 3600000;
     this.maxSize = options.maxSize || 10000;
     this.cache = new Map();
-    this.blacklist = new Set();
-    this.whitelist = new Set();
+    this.blacklist = new Map();
+    this.whitelist = new Map();
     this.greylist = new Map();
     this.stats = {
       hits: 0,
@@ -24,7 +24,9 @@ export class ReputationCache {
   set(url, data) {
     const hash = this._hash(url);
     
-    if (this.cache.size >= this.maxSize) {
+    if (this.cache.has(hash)) {
+      this.cache.delete(hash);
+    } else if (this.cache.size >= this.maxSize) {
       this._evictOldest();
     }
 
@@ -53,6 +55,8 @@ export class ReputationCache {
 
     entry.accessCount++;
     entry.lastAccess = Date.now();
+    this.cache.delete(hash);
+    this.cache.set(hash, entry);
     this.stats.hits++;
 
     return entry.data;
@@ -60,7 +64,11 @@ export class ReputationCache {
 
   addToBlacklist(url, reason = '') {
     const hash = this._hash(url);
-    this.blacklist.add(hash);
+    this.blacklist.set(hash, {
+      url: url,
+      reason: reason,
+      addedAt: Date.now()
+    });
     this.greylist.set(hash, {
       url: url,
       reason: reason,
@@ -71,7 +79,11 @@ export class ReputationCache {
 
   addToWhitelist(url, reason = '') {
     const hash = this._hash(url);
-    this.whitelist.add(hash);
+    this.whitelist.set(hash, {
+      url: url,
+      reason: reason,
+      addedAt: Date.now()
+    });
     this.greylist.set(hash, {
       url: url,
       reason: reason,
@@ -96,7 +108,7 @@ export class ReputationCache {
 
   getReputation(url) {
     const hash = this._hash(url);
-    
+
     if (this.blacklist.has(hash)) {
       return {
         status: 'blacklisted',
@@ -125,18 +137,9 @@ export class ReputationCache {
   }
 
   _evictOldest() {
-    let oldestHash = null;
-    let oldestTime = Infinity;
-
-    for (const [hash, entry] of this.cache.entries()) {
-      const lastAccess = entry.lastAccess || entry.timestamp;
-      if (lastAccess < oldestTime) {
-        oldestTime = lastAccess;
-        oldestHash = hash;
-      }
-    }
-
-    if (oldestHash) {
+    const oldestEntry = this.cache.entries().next();
+    if (!oldestEntry.done) {
+      const [oldestHash] = oldestEntry.value;
       this.cache.delete(oldestHash);
       this.stats.evictions++;
     }

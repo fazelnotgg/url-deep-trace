@@ -1,4 +1,6 @@
 import axios from 'axios';
+import https from 'https';
+import http from 'http';
 import { CookieJar } from 'tough-cookie';
 import * as cheerio from 'cheerio';
 import { URL } from 'url';
@@ -21,6 +23,35 @@ export class URLTracer {
     this.headerFingerprint = new HeaderFingerprint();
     this.behavioralAnalyzer = new BehavioralAnalyzer();
     this.enableDeepAnalysis = options.enableDeepAnalysis !== false;
+    this.analysisDepth = options.analysisDepth || 'full';
+    
+    const agentOptions = {
+      keepAlive: true,
+      maxSockets: 50,
+      maxFreeSockets: 10,
+      timeout: this.timeout,
+      freeSocketTimeout: 4000,
+      keepAliveMsecs: 1000
+    };
+    
+    this.httpsAgent = new https.Agent(agentOptions);
+    this.httpAgent = new http.Agent(agentOptions);
+    
+    this.axiosInstance = axios.create({
+      httpAgent: this.httpAgent,
+      httpsAgent: this.httpsAgent,
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: this.timeout,
+      headers: {
+        'User-Agent': this.userAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      }
+    });
   }
 
   async trace(initialUrl) {
@@ -124,44 +155,54 @@ export class URLTracer {
     try {
       const parsedUrl = new URL(url);
       hopData.protocol = parsedUrl.protocol.replace(':', '');
-
-      if (this.enableDeepAnalysis) {
-        const lexicalStart = Date.now();
-        hopData.lexical = this.lexicalAnalyzer.analyze(url);
-        hopData.timing.lexicalAnalysis = Date.now() - lexicalStart;
-      }
-
-      if (parsedUrl.protocol === 'https:') {
-        const tlsStart = Date.now();
-        hopData.tlsInfo = await this.tlsInspector.inspect(url);
-        hopData.timing.tlsInspection = Date.now() - tlsStart;
-      }
-
-      if (this.enableDeepAnalysis) {
-        const domainStart = Date.now();
-        hopData.domainInfo = await this.domainIntelligence.analyze(parsedUrl.hostname);
-        hopData.timing.domainAnalysis = Date.now() - domainStart;
-      }
+      const isHttps = parsedUrl.protocol === 'https:';
+      const hostname = parsedUrl.hostname;
 
       const cookies = await cookieJar.getCookieString(url);
       
-      const requestStart = Date.now();
-      const response = await axios({
-        method: 'GET',
-        url: url,
-        maxRedirects: 0,
-        validateStatus: () => true,
-        timeout: this.timeout,
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          ...(cookies ? { 'Cookie': cookies } : {})
+      const preAnalysisTasks = [];
+      
+      if (this.enableDeepAnalysis) {
+        preAnalysisTasks.push(
+          (async () => {
+            const start = Date.now();
+            hopData.lexical = this.lexicalAnalyzer.analyze(url);
+            hopData.timing.lexicalAnalysis = Date.now() - start;
+          })()
+        );
+        
+        if (isHttps && this.analysisDepth !== 'fast') {
+          preAnalysisTasks.push(
+            (async () => {
+              const start = Date.now();
+              hopData.tlsInfo = await this.tlsInspector.inspect(url);
+              hopData.timing.tlsInspection = Date.now() - start;
+            })()
+          );
         }
-      });
+        
+        if (this.analysisDepth === 'full') {
+          preAnalysisTasks.push(
+            (async () => {
+              const start = Date.now();
+              hopData.domainInfo = await this.domainIntelligence.analyze(hostname);
+              hopData.timing.domainAnalysis = Date.now() - start;
+            })()
+          );
+        }
+      }
+
+      const requestStart = Date.now();
+      const [response] = await Promise.all([
+        this.axiosInstance({
+          method: 'GET',
+          url: url,
+          headers: {
+            ...(cookies ? { 'Cookie': cookies } : {})
+          }
+        }),
+        ...preAnalysisTasks
+      ]);
 
       hopData.timing.httpRequest = Date.now() - requestStart;
       hopData.statusCode = response.status;
@@ -174,10 +215,10 @@ export class URLTracer {
       }
 
       if (response.headers['set-cookie']) {
-        const setCookieArray = Array.isArray(response.headers['set-cookie']) 
-          ? response.headers['set-cookie'] 
+        const setCookieArray = Array.isArray(response.headers['set-cookie'])
+          ? response.headers['set-cookie']
           : [response.headers['set-cookie']];
-        
+
         for (const cookieStr of setCookieArray) {
           await cookieJar.setCookie(cookieStr, url);
         }
@@ -198,7 +239,7 @@ export class URLTracer {
 
         const metaRefreshUrl = this._detectMetaRefresh(htmlData, url);
         const jsRedirectUrl = this.enableDeepAnalysis ? this._detectJSRedirect(htmlData, url) : null;
-        
+
         if (metaRefreshUrl) {
           hopData.redirectType = 'meta-refresh';
           hopData.nextUrl = metaRefreshUrl;
@@ -219,7 +260,7 @@ export class URLTracer {
     } catch (error) {
       hopData.error = error.message;
       hopData.type = 'error';
-      
+
       if (error.code === 'ECONNABORTED') {
         hopData.error = 'Request timeout';
       } else if (error.code === 'ENOTFOUND') {
