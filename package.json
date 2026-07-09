@@ -1,7 +1,7 @@
 {
   "name": "@fazelstudio/url-deep-trace",
-  "version": "1.1.0",
-  "description": "Advanced URL tracing engine with SSL forensics and security analysis - Optimized for performance",
+  "version": "1.1.1",
+  "description": "Advanced URL tracing engine with SSL forensics, threat intelligence, ML classification, and security risk scoring",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -12,7 +12,11 @@
     "example": "node examples/basic-usage.js",
     "example:advanced": "node examples/advanced-usage.js",
     "server": "node examples/api-server.js",
-    "dev:server": "nodemon examples/api-server.js"
+    "dev:server": "nodemon examples/api-server.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\""
   },
   "files": [
     "src"
@@ -23,13 +27,21 @@
     "forensics",
     "security",
     "ssl",
+    "tls",
     "redirect",
     "phishing",
     "malware",
     "threat-intelligence",
-    "machine-learning"
+    "machine-learning",
+    "homoglyph",
+    "dns",
+    "risk-scoring"
   ],
-  "author": "fazelllyyy",
+  "author": {
+    "name": "Fazel",
+    "email": "zulfazlilsm@gmail.com",
+    "url": "https://github.com/fazelllyyy"
+  },
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.2",
@@ -39,17 +51,23 @@
     "tough-cookie": "^4.1.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "eslint": "^9.0.0",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.2.0"
   },
   "optionalDependencies": {
     "playwright": "^1.40.1",
     "puppeteer": "^21.6.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fazelllyyy/url-deep-trace.git"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/fazelllyyy/url-deep-trace/issues"
+  },
+  "homepage": "https://github.com/fazelllyyy/url-deep-trace#readme"
 }
