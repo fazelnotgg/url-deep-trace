@@ -23,7 +23,7 @@ export class ReputationCache {
 
   set(url, data) {
     const hash = this._hash(url);
-    
+
     if (this.cache.has(hash)) {
       this.cache.delete(hash);
     } else if (this.cache.size >= this.maxSize) {
@@ -225,8 +225,8 @@ export class ReputationCache {
       cacheSize: this.cache.size,
       blacklistSize: this.blacklist.size,
       whitelistSize: this.whitelist.size,
-      hitRate: this.stats.hits > 0 
-        ? Math.round((this.stats.hits / (this.stats.hits + this.stats.misses)) * 100) 
+      hitRate: this.stats.hits > 0
+        ? Math.round((this.stats.hits / (this.stats.hits + this.stats.misses)) * 100)
         : 0
     };
   }

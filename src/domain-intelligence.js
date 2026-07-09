@@ -23,7 +23,7 @@ export class DomainIntelligence {
     this.trustedTLDs = [
       'com', 'net', 'org', 'edu', 'gov', 'mil'
     ];
-    
+
     this.dnsCache = new Map();
     this.dnsCacheTTL = options.dnsCacheTTL || 300000;
     this.dnsCacheMaxSize = options.dnsCacheMaxSize || 1000;
@@ -37,14 +37,14 @@ export class DomainIntelligence {
   _getCachedDNS(hostname, type) {
     const key = this._getCacheKey(hostname, type);
     const cached = this.dnsCache.get(key);
-    
+
     if (!cached) return null;
-    
+
     if (Date.now() - cached.timestamp > this.dnsCacheTTL) {
       this.dnsCache.delete(key);
       return null;
     }
-    
+
     return cached.data;
   }
 
@@ -53,7 +53,7 @@ export class DomainIntelligence {
       const oldestKey = this.dnsCache.keys().next().value;
       this.dnsCache.delete(oldestKey);
     }
-    
+
     const key = this._getCacheKey(hostname, type);
     this.dnsCache.set(key, {
       data: data,
@@ -64,7 +64,7 @@ export class DomainIntelligence {
   async _queryWithTimeout(hostname, resolver, type) {
     return Promise.race([
       resolver(hostname),
-      new Promise((_, reject) => 
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`DNS ${type} timeout`)), this.dnsTimeout)
       )
     ]);
@@ -105,7 +105,7 @@ export class DomainIntelligence {
     };
 
     const dnsQueries = [];
-    
+
     dnsQueries.push(
       (async () => {
         try {
@@ -170,7 +170,7 @@ export class DomainIntelligence {
 
   _assessReputation(hostname) {
     const tld = this._extractTLD(hostname);
-    
+
     return {
       tld: tld,
       isSuspiciousTLD: this.suspiciousTLDs.includes(tld.toLowerCase()),
@@ -187,7 +187,7 @@ export class DomainIntelligence {
     const tld = this._extractTLD(hostname);
     const hasNumbers = /\d{4,}/.test(hostname);
     const isVeryShort = hostname.length < 10;
-    
+
     let ageIndicator = 'unknown';
     const signals = [];
 

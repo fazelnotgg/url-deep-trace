@@ -27,7 +27,7 @@ export class HTMLAnalyzer {
   analyze(html, currentUrl) {
     try {
       const $ = cheerio.load(html);
-      
+
       return {
         structure: this._analyzeStructure($),
         forms: this._analyzeForms($, currentUrl),
@@ -68,19 +68,19 @@ export class HTMLAnalyzer {
 
   _analyzeForms($, currentUrl) {
     const forms = [];
-    
+
     $('form').each((i, elem) => {
       const $form = $(elem);
       const action = $form.attr('action');
       const method = ($form.attr('method') || 'get').toLowerCase();
-      
+
       const inputs = [];
       $form.find('input, textarea, select').each((j, input) => {
         const $input = $(input);
         const type = ($input.attr('type') || 'text').toLowerCase();
         const name = $input.attr('name') || '';
         const id = $input.attr('id') || '';
-        
+
         inputs.push({
           type: type,
           name: name,
@@ -122,7 +122,7 @@ export class HTMLAnalyzer {
     $('a[href]').each((i, elem) => {
       const href = $(elem).attr('href');
       const text = $(elem).text().trim();
-      
+
       if (!href) return;
 
       const linkData = {
@@ -251,7 +251,7 @@ export class HTMLAnalyzer {
 
       if (src) {
         const isExternal = src.startsWith('http://') || src.startsWith('https://');
-        
+
         images.push({
           src: src,
           hasAlt: !!alt,
@@ -300,7 +300,7 @@ export class HTMLAnalyzer {
     if (html.includes('unescape(')) indicators.push('unescape_usage');
     if (/\\x[0-9a-f]{2}/i.test(html)) indicators.push('hex_encoding');
     if (/\\u[0-9a-f]{4}/i.test(html)) indicators.push('unicode_encoding');
-    
+
     const inlineScripts = $('script:not([src])');
     let highEntropyScripts = 0;
 
@@ -362,8 +362,8 @@ export class HTMLAnalyzer {
   _hasAutoSubmit($form) {
     const onsubmit = $form.attr('onsubmit');
     const html = $form.html();
-    
-    return (onsubmit && onsubmit.includes('submit')) || 
+
+    return (onsubmit && onsubmit.includes('submit')) ||
            (html && (html.includes('.submit()') || html.includes('autosubmit')));
   }
 
@@ -373,7 +373,7 @@ export class HTMLAnalyzer {
     $form.find('input[type="hidden"]').each((i, elem) => {
       const name = $(elem).attr('name') || '';
       const nameLower = name.toLowerCase();
-      
+
       if (nameLower.includes('csrf') || nameLower.includes('token') || nameLower.includes('_token')) {
         hasToken = true;
         return false;
@@ -398,8 +398,8 @@ export class HTMLAnalyzer {
   }
 
   _hasLinkObfuscation(href) {
-    return href.includes('%') || 
-           href.includes('\\x') || 
+    return href.includes('%') ||
+           href.includes('\\x') ||
            href.includes('\\u') ||
            href.length > 200;
   }
@@ -420,7 +420,7 @@ export class HTMLAnalyzer {
     const width = $elem.attr('width');
     const height = $elem.attr('height');
 
-    return style.includes('display:none') || 
+    return style.includes('display:none') ||
            style.includes('display: none') ||
            style.includes('visibility:hidden') ||
            style.includes('visibility: hidden') ||

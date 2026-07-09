@@ -7,7 +7,7 @@ export class WebhookNotifier {
     this.retryAttempts = options.retryAttempts || 3;
     this.retryDelay = options.retryDelay || 1000;
     this.timeout = options.timeout || 5000;
-    
+
     this.triggerConditions = {
       onHighRisk: options.onHighRisk !== false,
       onMalicious: options.onMalicious !== false,
@@ -54,7 +54,7 @@ export class WebhookNotifier {
       return { sent: false, reason: 'Notifications disabled or no webhooks configured' };
     }
 
-    const highRiskResults = analysisResults.filter(r => 
+    const highRiskResults = analysisResults.filter(r =>
       r.security?.risk?.score >= this.triggerConditions.minRiskScore
     );
 
@@ -218,7 +218,7 @@ export class WebhookNotifier {
     return {
       ...this.stats,
       webhookCount: this.webhooks.length,
-      successRate: this.stats.sent > 0 
+      successRate: this.stats.sent > 0
         ? Math.round((this.stats.sent / (this.stats.sent + this.stats.failed)) * 100)
         : 0
     };

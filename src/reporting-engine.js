@@ -10,7 +10,7 @@ export class ReportingEngine {
 
   generateReport(analysisResult, type = 'technical', options = {}) {
     const template = this.templates[type];
-    
+
     if (!template) {
       throw new Error(`Unknown report type: ${type}`);
     }
@@ -20,7 +20,7 @@ export class ReportingEngine {
 
   generateBatchReport(batchResults, type = 'executive', options = {}) {
     const reports = [];
-    
+
     for (const result of batchResults) {
       if (this._shouldIncludeInReport(result, options)) {
         reports.push(this.generateReport(result, type, options));
@@ -60,7 +60,7 @@ export class ReportingEngine {
       generatedAt: new Date().toISOString(),
       url: result.url,
       finalDestination: result.finalDestination,
-      
+
       traceAnalysis: {
         totalHops: result.trace?.totalHops,
         redirectChain: result.trace?.chain?.map(hop => ({
@@ -79,9 +79,9 @@ export class ReportingEngine {
       },
 
       technicalDetails: this._extractTechnicalDetails(result),
-      
+
       indicators: this._extractTechnicalIndicators(result),
-      
+
       timeline: this._buildTimeline(result)
     };
   }
@@ -91,7 +91,7 @@ export class ReportingEngine {
       reportType: 'compliance',
       generatedAt: new Date().toISOString(),
       url: result.url,
-      
+
       securityPosture: {
         tlsCompliance: this._assessTLSCompliance(result),
         headerCompliance: this._assessHeaderCompliance(result),
@@ -100,11 +100,11 @@ export class ReportingEngine {
       },
 
       vulnerabilities: this._identifyVulnerabilities(result),
-      
+
       complianceScore: this._calculateComplianceScore(result),
-      
+
       remediation: this._generateRemediationSteps(result),
-      
+
       regulations: this._assessRegulatoryCompliance(result)
     };
   }
@@ -114,7 +114,7 @@ export class ReportingEngine {
       reportType: 'incident',
       generatedAt: new Date().toISOString(),
       incidentId: this._generateIncidentId(),
-      
+
       incidentSummary: {
         url: result.url,
         severity: this._determineSeverity(result),
@@ -165,7 +165,7 @@ export class ReportingEngine {
       total: results.length,
       successful: results.filter(r => r.success).length,
       failed: results.filter(r => !r.success).length,
-      
+
       riskDistribution: {
         minimal: 0,
         low: 0,
@@ -305,7 +305,7 @@ export class ReportingEngine {
 
     if (result.trace?.chain?.[0]) {
       const firstHop = result.trace.chain[0];
-      
+
       details.tls = firstHop.tlsInfo;
       details.headers = firstHop.headerFingerprint;
       details.domain = firstHop.domainInfo;
@@ -396,7 +396,7 @@ export class ReportingEngine {
 
   _assessPrivacyCompliance(result) {
     const dataCollected = result.threat?.dataExfiltrationRisk?.risk > 0;
-    const externalSharing = result.trace?.chain?.some(hop => 
+    const externalSharing = result.trace?.chain?.some(hop =>
       hop.htmlAnalysis?.forms?.externalSubmissions > 0
     );
 
@@ -473,7 +473,7 @@ export class ReportingEngine {
 
   _determineSeverity(result) {
     const riskScore = result.security?.risk?.score || 0;
-    
+
     if (riskScore >= 80) return 'critical';
     if (riskScore >= 60) return 'high';
     if (riskScore >= 40) return 'medium';
@@ -489,11 +489,11 @@ export class ReportingEngine {
 
   _identifyThreatType(result) {
     const types = [];
-    
+
     if (result.threat?.phishingIndicators?.detected) types.push('Phishing');
     if (result.threat?.malwareRisk?.risk > 50) types.push('Malware');
     if (result.threat?.brandImpersonation?.detected) types.push('Impersonation');
-    
+
     return types.length > 0 ? types : ['Unknown'];
   }
 

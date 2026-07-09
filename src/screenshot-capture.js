@@ -16,7 +16,7 @@ export class ScreenshotCapture {
     this.fullPage = options.fullPage !== false;
     this.quality = options.quality || 80;
     this.enabled = options.enabled || false;
-    
+
     this.stats = {
       captured: 0,
       failed: 0,
@@ -39,7 +39,7 @@ export class ScreenshotCapture {
       const filepath = path.join(this.outputDir, filename);
 
       const puppeteerAvailable = await this._checkPuppeteer();
-      
+
       if (puppeteerAvailable) {
         return await this._captureWithPuppeteer(url, filepath, options);
       } else {
@@ -58,7 +58,7 @@ export class ScreenshotCapture {
   async _captureWithPuppeteer(url, filepath, options) {
     try {
       const puppeteer = await import('puppeteer');
-      
+
       const browser = await puppeteer.launch({
         headless: true,
         args: [
@@ -70,7 +70,7 @@ export class ScreenshotCapture {
       });
 
       const page = await browser.newPage();
-      
+
       await page.setViewport({
         width: this.viewportWidth,
         height: this.viewportHeight
@@ -111,7 +111,7 @@ export class ScreenshotCapture {
   async _captureWithPlaywright(url, filepath, options) {
     try {
       const { chromium } = await import('playwright');
-      
+
       const browser = await chromium.launch({
         headless: true
       });
@@ -199,7 +199,7 @@ export class ScreenshotCapture {
 
   async getScreenshot(filename) {
     const filepath = path.join(this.outputDir, filename);
-    
+
     try {
       const buffer = await fs.readFile(filepath);
       return {
@@ -217,13 +217,13 @@ export class ScreenshotCapture {
 
   async deleteScreenshot(filename) {
     const filepath = path.join(this.outputDir, filename);
-    
+
     try {
       const stats = await fs.stat(filepath);
       await fs.unlink(filepath);
-      
+
       this.stats.totalSize -= stats.size;
-      
+
       return {
         success: true,
         deleted: filename
@@ -245,7 +245,7 @@ export class ScreenshotCapture {
         if (file.endsWith('.jpg') || file.endsWith('.png')) {
           const filepath = path.join(this.outputDir, file);
           const stats = await fs.stat(filepath);
-          
+
           screenshots.push({
             filename: file,
             size: stats.size,

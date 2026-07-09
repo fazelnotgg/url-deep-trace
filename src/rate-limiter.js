@@ -3,11 +3,11 @@ export class RateLimiter {
     this.maxRequestsPerWindow = options.maxRequestsPerWindow || 100;
     this.windowSizeMs = options.windowSizeMs || 60000;
     this.maxConcurrent = options.maxConcurrent || 10;
-    
+
     this.requestLog = [];
     this.activeRequests = 0;
     this.waitingQueue = [];
-    
+
     this.stats = {
       totalRequests: 0,
       blocked: 0,
@@ -42,7 +42,7 @@ export class RateLimiter {
 
   release() {
     this.activeRequests--;
-    
+
     if (this.waitingQueue.length > 0) {
       const resolver = this.waitingQueue.shift();
       resolver();
@@ -60,7 +60,7 @@ export class RateLimiter {
     if (domain !== 'global' && this.perDomainLimits.has(domain)) {
       const limit = this.perDomainLimits.get(domain);
       const domainLog = this.domainRequestLogs.get(domain) || [];
-      
+
       if (domainLog.length >= limit.maxRequests) {
         return false;
       }
@@ -71,9 +71,9 @@ export class RateLimiter {
 
   _logRequest(domain) {
     const now = Date.now();
-    
+
     this.requestLog.push(now);
-    
+
     if (domain !== 'global') {
       if (!this.domainRequestLogs.has(domain)) {
         this.domainRequestLogs.set(domain, []);
@@ -84,9 +84,9 @@ export class RateLimiter {
 
   _cleanOldRequests(domain) {
     const cutoff = Date.now() - this.windowSizeMs;
-    
+
     this.requestLog = this.requestLog.filter(timestamp => timestamp > cutoff);
-    
+
     if (domain !== 'global' && this.domainRequestLogs.has(domain)) {
       const domainLog = this.domainRequestLogs.get(domain);
       this.domainRequestLogs.set(
@@ -103,7 +103,7 @@ export class RateLimiter {
 
     const oldestRequest = Math.min(...this.requestLog);
     const timeUntilExpiry = (oldestRequest + this.windowSizeMs) - Date.now();
-    
+
     return Math.max(0, timeUntilExpiry);
   }
 
@@ -171,7 +171,7 @@ export class RateLimiter {
 
   async executeWithLimit(fn, domain = 'global') {
     const release = await this.acquire(domain);
-    
+
     try {
       const result = await fn();
       return result;

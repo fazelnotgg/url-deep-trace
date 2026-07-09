@@ -43,10 +43,10 @@ export class MLClassifier {
 
     features.urlLength = this._normalizeUrlLength(result.url);
     features.redirectCount = this._normalizeRedirectCount(result.trace?.totalHops || 0);
-    
+
     if (result.trace?.chain?.[0]) {
       const firstHop = result.trace.chain[0];
-      
+
       features.entropy = this._normalizeEntropy(firstHop.lexical?.entropy || 0);
       features.domainReputation = this._normalizeDomainReputation(firstHop.domainInfo);
       features.certificateValidity = this._normalizeCertificateValidity(firstHop.tlsInfo);
@@ -63,7 +63,7 @@ export class MLClassifier {
     }
 
     features.protocolDowngrade = result.security?.risk?.details?.protocolDowngrade ? 1.0 : 0.0;
-    
+
     const lastHop = result.trace?.chain?.[result.trace.chain.length - 1];
     if (lastHop) {
       features.domainAge = this._normalizeDomainAge(lastHop.domainInfo);
@@ -100,24 +100,24 @@ export class MLClassifier {
   calculateConfidence(score, features) {
     const featureCount = Object.keys(features).length;
     const nonZeroFeatures = Object.values(features).filter(v => v > 0).length;
-    
+
     const featureCompleteness = nonZeroFeatures / featureCount;
-    
+
     let distanceToThreshold = 0;
     if (score >= this.thresholds.malicious) {
       distanceToThreshold = (score - this.thresholds.malicious) / (1.0 - this.thresholds.malicious);
     } else if (score >= this.thresholds.suspicious) {
-      distanceToThreshold = (score - this.thresholds.suspicious) / 
+      distanceToThreshold = (score - this.thresholds.suspicious) /
                            (this.thresholds.malicious - this.thresholds.suspicious);
     } else if (score >= this.thresholds.questionable) {
-      distanceToThreshold = (score - this.thresholds.questionable) / 
+      distanceToThreshold = (score - this.thresholds.questionable) /
                            (this.thresholds.suspicious - this.thresholds.questionable);
     } else {
       distanceToThreshold = score / this.thresholds.questionable;
     }
 
     const confidence = (featureCompleteness * 0.4) + (distanceToThreshold * 0.6);
-    
+
     return Math.round(confidence * 100);
   }
 
@@ -132,7 +132,7 @@ export class MLClassifier {
     for (const [feature, value] of topFeatures) {
       const weight = this.featureWeights[feature] || 0;
       const contribution = value * weight;
-      
+
       explanations.push({
         feature: this._humanizeFeatureName(feature),
         value: Math.round(value * 100),
@@ -169,14 +169,14 @@ export class MLClassifier {
 
   _normalizeDomainReputation(domainInfo) {
     if (!domainInfo || !domainInfo.reputation) return 0.5;
-    
+
     let score = 0;
-    
+
     if (domainInfo.reputation.isSuspiciousTLD) score += 0.3;
     if (domainInfo.reputation.hasNumbers) score += 0.1;
     if (domainInfo.reputation.hyphenCount > 2) score += 0.2;
     if (!domainInfo.dnsRecords?.querySuccess) score += 0.4;
-    
+
     return Math.min(1.0, score);
   }
 
@@ -190,35 +190,35 @@ export class MLClassifier {
 
   _normalizeSecurityHeaders(headerFingerprint) {
     if (!headerFingerprint || !headerFingerprint.security) return 0.5;
-    
+
     const score = headerFingerprint.security.score;
     return 1.0 - (score / 100);
   }
 
   _normalizeFormRisk(htmlAnalysis) {
     if (!htmlAnalysis || !htmlAnalysis.forms) return 0.0;
-    
+
     let score = 0;
-    
+
     if (htmlAnalysis.forms.hasSensitiveForms) score += 0.4;
     if (htmlAnalysis.forms.externalSubmissions > 0) score += 0.6;
-    
+
     return Math.min(1.0, score);
   }
 
   _normalizeScriptObfuscation(htmlAnalysis) {
     if (!htmlAnalysis || !htmlAnalysis.scripts) return 0.0;
-    
+
     const obfuscatedRatio = htmlAnalysis.scripts.total > 0
       ? htmlAnalysis.scripts.obfuscated / htmlAnalysis.scripts.total
       : 0;
-    
+
     return obfuscatedRatio;
   }
 
   _normalizeDomainAge(domainInfo) {
     if (!domainInfo || !domainInfo.ageEstimate) return 0.5;
-    
+
     if (domainInfo.ageEstimate.indicator === 'likely_new') return 0.7;
     if (domainInfo.ageEstimate.indicator === 'likely_mature') return 0.0;
     return 0.5;
@@ -237,7 +237,7 @@ export class MLClassifier {
       scriptObfuscation: 'Script Obfuscation',
       domainReputation: 'Domain Reputation'
     };
-    
+
     return names[feature] || feature;
   }
 
@@ -248,7 +248,7 @@ export class MLClassifier {
 
     const topFactor = factors[0];
     let text = `Classified as ${classification}. `;
-    
+
     if (classification === 'malicious') {
       text += `Primary concern: ${topFactor.feature} shows high risk (${topFactor.value}%). `;
     } else if (classification === 'suspicious') {

@@ -85,7 +85,7 @@ export class RiskEngine {
       factors.push('Connection errors encountered (+8)');
     }
 
-    const hasCircularRedirect = traceResult.chain.some(hop => 
+    const hasCircularRedirect = traceResult.chain.some(hop =>
       hop.error && hop.error.toLowerCase().includes('circular')
     );
     if (hasCircularRedirect) {

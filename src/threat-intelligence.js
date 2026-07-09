@@ -7,7 +7,7 @@ export class ThreatIntelligence {
         'payment', 'expired', 'limited', 'time', 'winner',
         'prize', 'claim', 'urgent', 'immediate', 'action'
       ],
-      
+
       brandImpersonation: [
         'paypal', 'amazon', 'microsoft', 'apple', 'google',
         'facebook', 'netflix', 'banking', 'login', 'signin'
@@ -49,7 +49,7 @@ export class ThreatIntelligence {
         /\bdrop\b.*\btable\b/i,
         /\binsert\b.*\binto\b/i
       ],
-      
+
       xss: [
         /<script[^>]*>.*<\/script>/i,
         /javascript:/i,
@@ -94,7 +94,7 @@ export class ThreatIntelligence {
     if (fullAnalysisResult && fullAnalysisResult.security) {
       const riskScore = fullAnalysisResult.security.risk.score;
       score += riskScore * 0.3;
-      
+
       if (riskScore > 70) {
         factors.push('high_risk_score');
       }
@@ -129,7 +129,7 @@ export class ThreatIntelligence {
     for (const hop of chain) {
       if (hop.url) {
         const url = hop.url.toLowerCase();
-        
+
         for (const keyword of this.maliciousPatterns.phishingKeywords) {
           if (url.includes(keyword)) {
             indicators++;
@@ -219,7 +219,7 @@ export class ThreatIntelligence {
     for (const hop of chain) {
       if (hop.url) {
         const url = hop.url.toLowerCase();
-        
+
         for (const ext of this.suspiciousFileExtensions) {
           if (url.endsWith(ext)) {
             risk += 30;
@@ -341,16 +341,16 @@ export class ThreatIntelligence {
     for (const hop of chain) {
       if (hop.url) {
         const url = hop.url.toLowerCase();
-        
+
         for (const brand of this.maliciousPatterns.brandImpersonation) {
           if (url.includes(brand)) {
             try {
               const urlObj = new URL(hop.url);
               const hostname = urlObj.hostname.toLowerCase();
-              
-              const isLegit = hostname === `${brand}.com` || 
+
+              const isLegit = hostname === `${brand}.com` ||
                             hostname.endsWith(`.${brand}.com`);
-              
+
               if (!isLegit && !this._isKnownCDN(hostname)) {
                 impersonations.push({
                   brand: brand,
@@ -368,7 +368,7 @@ export class ThreatIntelligence {
 
       if (hop.htmlAnalysis) {
         const title = hop.htmlAnalysis.structure.title?.toLowerCase() || '';
-        
+
         for (const brand of this.maliciousPatterns.brandImpersonation) {
           if (title.includes(brand)) {
             impersonations.push({
@@ -395,7 +395,7 @@ export class ThreatIntelligence {
     for (const hop of chain) {
       if (hop.url) {
         const url = hop.url.toLowerCase();
-        
+
         for (const keyword of this.maliciousPatterns.cryptoScam) {
           if (url.includes(keyword)) {
             scamIndicators.push({
@@ -419,8 +419,8 @@ export class ThreatIntelligence {
 
       if (hop.htmlAnalysis) {
         const title = hop.htmlAnalysis.structure.title?.toLowerCase() || '';
-        
-        if (title.includes('winner') || title.includes('prize') || 
+
+        if (title.includes('winner') || title.includes('prize') ||
             title.includes('congratulation')) {
           scamIndicators.push({
             type: 'prize_scam',
@@ -515,7 +515,7 @@ export class ThreatIntelligence {
     for (const hop of chain) {
       if (hop.url) {
         iocs.urls.add(hop.url);
-        
+
         try {
           const url = new URL(hop.url);
           iocs.domains.add(url.hostname);

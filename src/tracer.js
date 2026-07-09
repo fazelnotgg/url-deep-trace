@@ -24,7 +24,7 @@ export class URLTracer {
     this.behavioralAnalyzer = new BehavioralAnalyzer();
     this.enableDeepAnalysis = options.enableDeepAnalysis !== false;
     this.analysisDepth = options.analysisDepth || 'full';
-    
+
     const agentOptions = {
       keepAlive: true,
       maxSockets: 50,
@@ -33,10 +33,10 @@ export class URLTracer {
       freeSocketTimeout: 4000,
       keepAliveMsecs: 1000
     };
-    
+
     this.httpsAgent = new https.Agent(agentOptions);
     this.httpAgent = new http.Agent(agentOptions);
-    
+
     this.axiosInstance = axios.create({
       httpAgent: this.httpAgent,
       httpsAgent: this.httpsAgent,
@@ -58,7 +58,7 @@ export class URLTracer {
     const chain = [];
     const visitedUrls = new Set();
     const cookieJar = new CookieJar();
-    
+
     let currentUrl = initialUrl;
     let hopCount = 0;
 
@@ -75,7 +75,7 @@ export class URLTracer {
         }
 
         visitedUrls.add(currentUrl);
-        
+
         const hopResult = await this._executeHop(currentUrl, cookieJar);
         chain.push(hopResult);
 
@@ -159,9 +159,9 @@ export class URLTracer {
       const hostname = parsedUrl.hostname;
 
       const cookies = await cookieJar.getCookieString(url);
-      
+
       const preAnalysisTasks = [];
-      
+
       if (this.enableDeepAnalysis) {
         preAnalysisTasks.push(
           (async () => {
@@ -170,7 +170,7 @@ export class URLTracer {
             hopData.timing.lexicalAnalysis = Date.now() - start;
           })()
         );
-        
+
         if (isHttps && this.analysisDepth !== 'fast') {
           preAnalysisTasks.push(
             (async () => {
@@ -180,7 +180,7 @@ export class URLTracer {
             })()
           );
         }
-        
+
         if (this.analysisDepth === 'full') {
           preAnalysisTasks.push(
             (async () => {
@@ -281,13 +281,13 @@ export class URLTracer {
       for (let i = 0; i < metaTags.length; i++) {
         const tag = metaTags[i];
         const httpEquiv = $(tag).attr('http-equiv');
-        
+
         if (httpEquiv && httpEquiv.toLowerCase() === 'refresh') {
           const content = $(tag).attr('content');
-          
+
           if (content) {
             const urlMatch = content.match(/url\s*=\s*['"]?([^'">\s]+)/i);
-            
+
             if (urlMatch && urlMatch[1]) {
               return this._resolveUrl(baseUrl, urlMatch[1]);
             }
@@ -327,9 +327,9 @@ export class URLTracer {
   _resolveUrl(base, relative) {
     try {
       if (!relative) return null;
-      
+
       relative = relative.trim();
-      
+
       if (relative.startsWith('http://') || relative.startsWith('https://')) {
         return relative;
       }

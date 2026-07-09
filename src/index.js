@@ -17,9 +17,9 @@ export class URLDeepTrace {
       enableDeepAnalysis: options.enableDeepAnalysis !== false,
       analysisDepth: options.analysisDepth || 'full'
     });
-    
+
     this.riskEngine = new RiskEngine();
-    
+
     this.performanceManager = new PerformanceManager({
       maxConcurrent: options.maxConcurrent || 5,
       retryAttempts: options.retryAttempts || 2,
@@ -33,7 +33,7 @@ export class URLDeepTrace {
 
     this.threatIntelligence = new ThreatIntelligence();
     this.mlClassifier = new MLClassifier();
-    
+
     this.webhookNotifier = new WebhookNotifier({
       webhooks: options.webhooks || [],
       enabled: options.enableWebhooks || false,
@@ -49,7 +49,7 @@ export class URLDeepTrace {
     });
 
     this.reportingEngine = new ReportingEngine();
-    
+
     this.enableCache = options.enableCache !== false;
     this.enableThreatIntel = options.enableThreatIntel !== false;
     this.enableMLClassification = options.enableMLClassification !== false;
@@ -67,7 +67,7 @@ export class URLDeepTrace {
       if (this.enableRateLimit) {
         const domain = new URL(url).hostname;
         const release = await this.rateLimiter.acquire(domain);
-        
+
         try {
           return await this._performAnalysis(url, startTime);
         } catch (error) {
@@ -107,7 +107,7 @@ export class URLDeepTrace {
   async _performAnalysis(url, startTime) {
     if (this.enableCache) {
       const reputation = this.reputationCache.getReputation(url);
-      
+
       if (reputation.status === 'blacklisted') {
         return {
           success: false,
@@ -397,7 +397,7 @@ export class URLDeepTrace {
       if (result.success) {
         summary.successful++;
         totalHops += result.trace.totalHops;
-        
+
         if (result.security.risk.level) {
           summary.riskLevels[result.security.risk.level]++;
         }

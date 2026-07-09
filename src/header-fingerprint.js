@@ -47,7 +47,7 @@ export class HeaderFingerprint {
 
   _normalizeHeaders(headers) {
     const normalized = {};
-    
+
     for (const key in headers) {
       normalized[key.toLowerCase()] = headers[key];
     }
@@ -58,7 +58,7 @@ export class HeaderFingerprint {
   _analyzeServer(headers) {
     const serverHeader = headers['server'] || '';
     const poweredBy = headers['x-powered-by'] || '';
-    
+
     let identified = 'unknown';
     let technology = [];
 
@@ -169,7 +169,7 @@ export class HeaderFingerprint {
 
   _analyzeCookies(headers) {
     const setCookie = headers['set-cookie'];
-    
+
     if (!setCookie) {
       return {
         present: false,
@@ -184,7 +184,7 @@ export class HeaderFingerprint {
       const hasSecure = /;\s*secure/i.test(cookie);
       const hasHttpOnly = /;\s*httponly/i.test(cookie);
       const hasSameSite = /;\s*samesite/i.test(cookie);
-      
+
       const name = cookie.split('=')[0].trim();
 
       analysis.push({
@@ -301,21 +301,21 @@ export class HeaderFingerprint {
 
   _extractVersion(serverHeader) {
     if (!serverHeader) return null;
-    
+
     const versionMatch = serverHeader.match(/\/(\d+\.\d+(?:\.\d+)?)/);
     return versionMatch ? versionMatch[1] : null;
   }
 
   _extractMaxAge(cacheControl) {
     if (!cacheControl) return null;
-    
+
     const maxAgeMatch = cacheControl.match(/max-age=(\d+)/i);
     return maxAgeMatch ? parseInt(maxAgeMatch[1], 10) : null;
   }
 
   _extractCharset(contentType) {
     if (!contentType) return null;
-    
+
     const charsetMatch = contentType.match(/charset=([^;]+)/i);
     return charsetMatch ? charsetMatch[1].trim() : null;
   }

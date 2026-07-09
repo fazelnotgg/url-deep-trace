@@ -30,7 +30,7 @@ export class BehavioralAnalyzer {
 
   _analyzeRedirectBehavior(chain) {
     const redirects = chain.filter(hop => hop.type === 'redirect');
-    
+
     if (redirects.length === 0) {
       return {
         pattern: 'direct',
@@ -93,7 +93,7 @@ export class BehavioralAnalyzer {
     }
 
     const uniqueDomains = new Set(domains);
-    
+
     for (let i = 0; i < domains.length - 1; i++) {
       if (domains[i] !== domains[i + 1]) {
         domainTransitions.push({
@@ -114,8 +114,8 @@ export class BehavioralAnalyzer {
       transitions: domainTransitions,
       tldChanges: tldChanges,
       registrarChanges: registrarChanges,
-      dominanceRatio: domains.length > 0 
-        ? Math.round((1 - (uniqueDomains.size / domains.length)) * 100) 
+      dominanceRatio: domains.length > 0
+        ? Math.round((1 - (uniqueDomains.size / domains.length)) * 100)
         : 0,
       isSuspicious: uniqueDomains.size > this.suspiciousBehaviors.crossDomainThreshold
     };
@@ -143,7 +143,7 @@ export class BehavioralAnalyzer {
     }
 
     const downgrades = switches.filter(s => s.isDowngrade).length;
-    const upgrades = switches.filter(s => 
+    const upgrades = switches.filter(s =>
       s.from === 'http' && s.to === 'https'
     ).length;
 
@@ -165,16 +165,16 @@ export class BehavioralAnalyzer {
 
     for (const hop of chain) {
       if (hop.headers && hop.headers['set-cookie']) {
-        const cookies = Array.isArray(hop.headers['set-cookie']) 
-          ? hop.headers['set-cookie'] 
+        const cookies = Array.isArray(hop.headers['set-cookie'])
+          ? hop.headers['set-cookie']
           : [hop.headers['set-cookie']];
 
         totalCookiesSet += cookies.length;
 
         for (const cookie of cookies) {
-          const isSecure = /;\s*secure/i.test(cookie) && 
+          const isSecure = /;\s*secure/i.test(cookie) &&
                           /;\s*httponly/i.test(cookie);
-          
+
           if (isSecure) {
             secureCookies++;
           } else {
@@ -195,17 +195,17 @@ export class BehavioralAnalyzer {
       secureCookies: secureCookies,
       insecureCookies: insecureCookies,
       operations: cookieOperations,
-      manipulationLevel: totalCookiesSet > this.suspiciousBehaviors.cookieManipulationThreshold 
-        ? 'high' 
+      manipulationLevel: totalCookiesSet > this.suspiciousBehaviors.cookieManipulationThreshold
+        ? 'high'
         : totalCookiesSet > 2 ? 'medium' : 'low',
-      isSuspicious: insecureCookies > secureCookies || 
+      isSuspicious: insecureCookies > secureCookies ||
                     totalCookiesSet > this.suspiciousBehaviors.cookieManipulationThreshold
     };
   }
 
   _analyzeTimingPatterns(chain) {
     const timings = [];
-    
+
     for (const hop of chain) {
       if (hop.timing) {
         const total = Object.values(hop.timing).reduce((a, b) => a + b, 0);
@@ -228,12 +228,12 @@ export class BehavioralAnalyzer {
     const maxTime = Math.max(...totalTimes);
     const minTime = Math.min(...totalTimes);
 
-    const variance = totalTimes.reduce((acc, time) => 
+    const variance = totalTimes.reduce((acc, time) =>
       acc + Math.pow(time - avgTime, 2), 0
     ) / totalTimes.length;
     const stdDev = Math.sqrt(variance);
 
-    const anomalies = timings.filter(t => 
+    const anomalies = timings.filter(t =>
       Math.abs(t.total - avgTime) > stdDev * 2
     );
 
@@ -273,7 +273,7 @@ export class BehavioralAnalyzer {
       contentTypeChanges: contentTypeChanges,
       contentTypes: Array.from(new Set(contentTypes)),
       statusCodePattern: statusCodePattern,
-      responseSizeVariation: responseSizes.length > 0 
+      responseSizeVariation: responseSizes.length > 0
         ? Math.max(...responseSizes) - Math.min(...responseSizes)
         : 0,
       isSuspicious: contentTypeChanges > 3
@@ -313,7 +313,7 @@ export class BehavioralAnalyzer {
         });
       }
 
-      if (current.headerFingerprint && 
+      if (current.headerFingerprint &&
           current.headerFingerprint.security.score < 30) {
         trustScore -= 15;
         trustViolations.push({
@@ -329,8 +329,8 @@ export class BehavioralAnalyzer {
       trustScore: trustScore,
       violations: trustViolations.length,
       violationDetails: trustViolations,
-      trustLevel: trustScore > 80 ? 'high' : 
-                  trustScore > 50 ? 'medium' : 
+      trustLevel: trustScore > 80 ? 'high' :
+                  trustScore > 50 ? 'medium' :
                   trustScore > 20 ? 'low' : 'critical'
     };
   }
@@ -343,14 +343,14 @@ export class BehavioralAnalyzer {
       indicators.push('user_agent_sensitive');
     }
 
-    const hasHiddenRedirects = chain.some(hop => 
+    const hasHiddenRedirects = chain.some(hop =>
       hop.redirectType === 'javascript' || hop.redirectType === 'meta-refresh'
     );
     if (hasHiddenRedirects) {
       indicators.push('hidden_redirects');
     }
 
-    const hasObfuscatedContent = chain.some(hop => 
+    const hasObfuscatedContent = chain.some(hop =>
       hop.htmlAnalysis && hop.htmlAnalysis.obfuscation.detected
     );
     if (hasObfuscatedContent) {
@@ -360,7 +360,7 @@ export class BehavioralAnalyzer {
     return {
       detected: indicators.length > 0,
       indicators: indicators,
-      confidenceLevel: indicators.length > 2 ? 'high' : 
+      confidenceLevel: indicators.length > 2 ? 'high' :
                        indicators.length > 0 ? 'medium' : 'low'
     };
   }
@@ -373,7 +373,7 @@ export class BehavioralAnalyzer {
     for (let i = 0; i < redirects.length - 2; i++) {
       const window = redirects.slice(i, i + 3);
       const timestamps = window.map(r => new Date(r.timestamp).getTime());
-      
+
       const timeDiff = timestamps[2] - timestamps[0];
       if (timeDiff < 1000) {
         return true;
@@ -403,7 +403,7 @@ export class BehavioralAnalyzer {
 
   _analyzeStatusPattern(codes) {
     const pattern = {};
-    
+
     for (const code of codes) {
       const category = Math.floor(code / 100) + 'xx';
       pattern[category] = (pattern[category] || 0) + 1;
@@ -413,9 +413,9 @@ export class BehavioralAnalyzer {
   }
 
   _detectUserAgentCloaking(chain) {
-    return chain.some(hop => 
-      hop.htmlAnalysis && 
-      hop.htmlAnalysis.scripts && 
+    return chain.some(hop =>
+      hop.htmlAnalysis &&
+      hop.htmlAnalysis.scripts &&
       hop.htmlAnalysis.scripts.total > 0
     );
   }

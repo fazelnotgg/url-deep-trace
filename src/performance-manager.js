@@ -9,14 +9,14 @@ export class PerformanceManager {
   async analyzeBatch(urls, analyzer) {
     const results = new Array(urls.length);
     const semaphore = { count: 0, queue: [] };
-    
+
     const processUrl = async (url, index) => {
       while (semaphore.count >= this.maxConcurrent) {
         await new Promise(resolve => semaphore.queue.push(resolve));
       }
-      
+
       semaphore.count++;
-      
+
       try {
         const result = await this._analyzeWithRetry(url, analyzer);
         results[index] = result;
@@ -27,7 +27,7 @@ export class PerformanceManager {
           const next = semaphore.queue.shift();
           next();
         }
-        
+
         if (this.progressCallback) {
           this.progressCallback({ completed: index + 1, total: urls.length });
         }
@@ -44,14 +44,14 @@ export class PerformanceManager {
     const batchSize = options.batchSize || this.maxConcurrent;
     const results = [];
     const useRetry = options.retry !== false;
-    
+
     for (let i = 0; i < urls.length; i += batchSize) {
       const batch = urls.slice(i, i + batchSize);
-      
-      const batchPromises = batch.map((url, index) => 
+
+      const batchPromises = batch.map((url, index) =>
         (async () => {
           try {
-            return useRetry 
+            return useRetry
               ? await this._analyzeWithRetry(url, analyzer)
               : await analyzer.analyze(url);
           } catch (error) {
@@ -66,13 +66,13 @@ export class PerformanceManager {
           }
         })()
       );
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
+
       if (this.progressCallback) {
-        this.progressCallback({ 
-          completed: Math.min(i + batchSize, urls.length), 
+        this.progressCallback({
+          completed: Math.min(i + batchSize, urls.length),
           total: urls.length,
           batch: Math.ceil((i + batchSize) / batchSize)
         });

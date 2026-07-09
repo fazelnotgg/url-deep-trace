@@ -10,7 +10,7 @@ export class TLSInspector {
   async inspect(urlString) {
     try {
       const parsedUrl = new URL(urlString);
-      
+
       if (parsedUrl.protocol !== 'https:') {
         return null;
       }
@@ -38,7 +38,7 @@ export class TLSInspector {
         },
         () => {
           const cert = socket.getPeerCertificate(true);
-          
+
           if (!cert || Object.keys(cert).length === 0) {
             socket.destroy();
             return resolve({
@@ -100,7 +100,7 @@ export class TLSInspector {
 
   _formatDistinguishedName(dn) {
     if (!dn) return '';
-    
+
     const parts = [];
     if (dn.C) parts.push(`C=${dn.C}`);
     if (dn.ST) parts.push(`ST=${dn.ST}`);
@@ -108,7 +108,7 @@ export class TLSInspector {
     if (dn.O) parts.push(`O=${dn.O}`);
     if (dn.OU) parts.push(`OU=${dn.OU}`);
     if (dn.CN) parts.push(`CN=${dn.CN}`);
-    
+
     return parts.join(', ');
   }
 }
