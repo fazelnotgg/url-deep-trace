@@ -1,0 +1,15 @@
+test/
+examples/
+.gitignore
+eslint.config.mjs
+.eslintrc.json
+.prettierrc
+node_modules/
+*.log
+.env
+.npmrc
+CONTRIBUTING.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+.github/

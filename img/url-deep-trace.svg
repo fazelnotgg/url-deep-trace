@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0F172A" />
+  
+  <defs>
+    <linearGradient id="udt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#10B981" stroke-width="4" opacity="0.2" />
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#10B981" stroke-width="8" opacity="0.4" />
+  <circle cx="256" cy="256" r="70" fill="none" stroke="#10B981" stroke-width="12" opacity="0.6" />
+  
+  <path d="M 180 300 C 130 300, 130 212, 180 212 L 230 212" fill="none" stroke="url(#udt-grad)" stroke-width="48" stroke-linecap="round" />
+  <path d="M 332 212 C 382 212, 382 300, 332 300 L 282 300" fill="none" stroke="url(#udt-grad)" stroke-width="48" stroke-linecap="round" />
+  <line x1="210" y1="256" x2="302" y2="256" stroke="url(#udt-grad)" stroke-width="48" stroke-linecap="round" />
+  
+  <circle cx="256" cy="256" r="20" fill="#FBBF24" />
+</svg>
